@@ -11,6 +11,20 @@ public sealed class SqliteOperationJournalTests
         System.Globalization.CultureInfo.InvariantCulture);
 
     [Fact]
+    public void SetSqliteResolverIfUnset_IgnoresExistingAssemblyResolver()
+    {
+        var invocations = 0;
+
+        SqliteOperationJournal.SetSqliteResolverIfUnset(() =>
+        {
+            invocations++;
+            throw new InvalidOperationException("A resolver is already set for the assembly.");
+        });
+
+        Assert.Equal(1, invocations);
+    }
+
+    [Fact]
     public async Task ReserveAsync_DistinguishesFirstReservationReplayAndCollision()
     {
         using var directory = new TemporaryDirectory();

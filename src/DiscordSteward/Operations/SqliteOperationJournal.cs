@@ -731,13 +731,26 @@ public sealed class SqliteOperationJournal : IOperationJournal, IConfigurationSn
 
             if (OperatingSystem.IsLinux())
             {
-                NativeLibrary.SetDllImportResolver(
-                    typeof(SQLitePCL.SQLite3Provider_sqlite3).Assembly,
-                    ResolveSystemSqlite);
+                SetSqliteResolverIfUnset(() =>
+                    NativeLibrary.SetDllImportResolver(
+                        typeof(SQLitePCL.SQLite3Provider_sqlite3).Assembly,
+                        ResolveSystemSqlite));
             }
 
             SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_sqlite3());
             Volatile.Write(ref _sqliteInitialized, 1);
+        }
+    }
+
+    internal static void SetSqliteResolverIfUnset(Action installResolver)
+    {
+        ArgumentNullException.ThrowIfNull(installResolver);
+        try
+        {
+            installResolver();
+        }
+        catch (InvalidOperationException)
+        {
         }
     }
 
