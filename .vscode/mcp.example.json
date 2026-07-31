@@ -1,0 +1,16 @@
+{
+  "servers": {
+    "discordSteward": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": [
+        "${workspaceFolder}/src/DiscordSteward/bin/Debug/net10.0/DiscordSteward.dll"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "Steward__ProfilePath": "config/profiles/all-tools.example.json"
+      }
+    }
+  }
+}

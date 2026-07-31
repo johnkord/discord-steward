@@ -1,0 +1,20 @@
+{
+  "profileVersion": 1,
+  "Discord": {
+    "GuildId": "667956000757776386"
+  },
+  "Steward": {
+    "ProfileName": "example-unrestricted-autonomy",
+    "DataPath": "data/servers/example-unrestricted/operations.db",
+    "AssetInboxPath": "data/servers/example-unrestricted/asset-inbox",
+    "AssetVaultPath": "data/servers/example-unrestricted/assets",
+    "WebhookSecretVaultPath": "data/servers/example-unrestricted/webhook-secrets"
+  },
+  "schemaVersion": 4,
+  "authorization": {
+    "mode": "UnrestrictedAutonomy"
+  },
+  "toolAllowlist": [
+    "*"
+  ]
+}

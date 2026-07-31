@@ -1,0 +1,62 @@
+{
+  "profileVersion": 1,
+  "Discord": {
+    "GuildId": "667956000757776386"
+  },
+  "Steward": {
+    "ProfileName": "example-observer",
+    "DataPath": "data/servers/example/operations.db",
+    "AssetInboxPath": "data/servers/example/asset-inbox",
+    "AssetVaultPath": "data/servers/example/assets",
+    "WebhookSecretVaultPath": "data/servers/example/webhook-secrets"
+  },
+  "schemaVersion": 3,
+  "toolAllowlist": [
+    "get_steward_capabilities",
+    "capture_guild_configuration_snapshot",
+    "compare_guild_configuration",
+    "get_bot_effective_permissions",
+    "get_bot_guild_profile",
+    "get_guild",
+    "get_guild_configuration_snapshot",
+    "get_guild_preview",
+    "get_guild_widget_image",
+    "list_roles",
+    "get_role",
+    "list_channels",
+    "get_channel",
+    "lint_guild_configuration",
+    "explain_role_permissions",
+    "analyze_role_hierarchy",
+    "analyze_channel_access",
+    "analyze_privilege_escalation_paths",
+    "analyze_moderation_configuration",
+    "analyze_onboarding_configuration",
+    "list_automod_rules",
+    "get_onboarding",
+    "get_welcome_screen",
+    "list_scheduled_events",
+    "list_guild_expressions",
+    "list_voice_regions",
+    "list_sticker_packs",
+    "get_sticker_pack",
+    "list_default_soundboard_sounds"
+  ],
+  "riskGates": {
+    "sensitiveReads": false,
+    "reversibleWrites": false,
+    "personImpactingWrites": false,
+    "irreversibleWrites": false
+  },
+  "protectedResourceIds": [
+    "667956000757776387",
+    "667956000757776388"
+  ],
+  "protectedNamePrefixes": [
+    "discord-steward",
+    "example-protected-"
+  ],
+  "deniedPermissions": [
+    "Administrator"
+  ]
+}

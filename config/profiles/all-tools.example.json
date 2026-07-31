@@ -1,0 +1,34 @@
+{
+  "profileVersion": 1,
+  "Discord": {
+    "GuildId": "667956000757776386"
+  },
+  "Steward": {
+    "ProfileName": "example-all-tools",
+    "DataPath": "data/servers/example/operations.db",
+    "AssetInboxPath": "data/servers/example/asset-inbox",
+    "AssetVaultPath": "data/servers/example/assets",
+    "WebhookSecretVaultPath": "data/servers/example/webhook-secrets"
+  },
+  "schemaVersion": 3,
+  "toolAllowlist": [
+    "*"
+  ],
+  "riskGates": {
+    "sensitiveReads": true,
+    "reversibleWrites": true,
+    "personImpactingWrites": true,
+    "irreversibleWrites": true
+  },
+  "protectedResourceIds": [
+    "667956000757776387",
+    "667956000757776388"
+  ],
+  "protectedNamePrefixes": [
+    "discord-steward",
+    "example-protected-"
+  ],
+  "deniedPermissions": [
+    "Administrator"
+  ]
+}

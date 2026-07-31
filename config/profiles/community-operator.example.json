@@ -1,0 +1,64 @@
+{
+  "profileVersion": 1,
+  "Discord": {
+    "GuildId": "667956000757776386"
+  },
+  "Steward": {
+    "ProfileName": "example-community-operator",
+    "DataPath": "data/servers/example/operations.db",
+    "AssetInboxPath": "data/servers/example/asset-inbox",
+    "AssetVaultPath": "data/servers/example/assets",
+    "WebhookSecretVaultPath": "data/servers/example/webhook-secrets"
+  },
+  "schemaVersion": 3,
+  "toolAllowlist": [
+    "get_steward_capabilities",
+    "capture_guild_configuration_snapshot",
+    "compare_guild_configuration",
+    "get_bot_effective_permissions",
+    "get_guild",
+    "get_guild_configuration_snapshot",
+    "list_roles",
+    "get_role",
+    "list_channels",
+    "get_channel",
+    "list_assets",
+    "get_message",
+    "list_messages",
+    "search_members",
+    "get_member",
+    "lint_guild_configuration",
+    "analyze_moderation_configuration",
+    "analyze_deletion_impact",
+    "get_operation",
+    "list_operations",
+    "reconcile_operation",
+    "create_category",
+    "create_text_channel",
+    "update_channel",
+    "reorder_channels",
+    "set_role_channel_permissions",
+    "set_member_role",
+    "send_message",
+    "delete_channel",
+    "update_guild_system_routing",
+    "update_guild_safety"
+  ],
+  "riskGates": {
+    "sensitiveReads": true,
+    "reversibleWrites": true,
+    "personImpactingWrites": true,
+    "irreversibleWrites": true
+  },
+  "protectedResourceIds": [
+    "667956000757776387",
+    "667956000757776388"
+  ],
+  "protectedNamePrefixes": [
+    "discord-steward",
+    "example-protected-"
+  ],
+  "deniedPermissions": [
+    "Administrator"
+  ]
+}

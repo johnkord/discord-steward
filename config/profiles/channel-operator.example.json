@@ -1,0 +1,44 @@
+{
+  "profileVersion": 1,
+  "Discord": {
+    "GuildId": "667956000757776386"
+  },
+  "Steward": {
+    "ProfileName": "example-channel-operator",
+    "DataPath": "data/servers/example/operations.db",
+    "AssetInboxPath": "data/servers/example/asset-inbox",
+    "AssetVaultPath": "data/servers/example/assets",
+    "WebhookSecretVaultPath": "data/servers/example/webhook-secrets"
+  },
+  "schemaVersion": 3,
+  "toolAllowlist": [
+    "get_steward_capabilities",
+    "get_bot_effective_permissions",
+    "get_guild",
+    "get_guild_configuration_snapshot",
+    "get_channel",
+    "lint_guild_configuration",
+    "capture_guild_configuration_snapshot",
+    "compare_guild_configuration",
+    "get_operation",
+    "reconcile_operation",
+    "update_channel"
+  ],
+  "riskGates": {
+    "sensitiveReads": true,
+    "reversibleWrites": true,
+    "personImpactingWrites": false,
+    "irreversibleWrites": false
+  },
+  "protectedResourceIds": [
+    "667956000757776387",
+    "667956000757776388"
+  ],
+  "protectedNamePrefixes": [
+    "discord-steward",
+    "example-protected-"
+  ],
+  "deniedPermissions": [
+    "Administrator"
+  ]
+}

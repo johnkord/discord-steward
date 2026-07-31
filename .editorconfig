@@ -1,0 +1,93 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{cs,csproj,props,targets}]
+indent_style = space
+indent_size = 4
+
+[*.{json,jsonc,yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[tests/**/*.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/DiscordReadTools.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/DiscordMutationTools.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/ManifestToolRegistry.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/ExtendedReadToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/MemberReadToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/AnalysisToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/CatalogReadToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/MessageReadToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/LocalCatalogToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/RoleMutationToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/ChannelMutationToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/MemberMutationToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/MessageMutationToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/AutoModMutationToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/CommunityMutationToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/EventStageMutationToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/ExpressionMutationToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none
+
+# MCP parameter names are part of the documented JSON tool contract.
+[src/DiscordSteward/Tools/IntegrationMutationToolDefinitions.cs]
+dotnet_diagnostic.CA1707.severity = none

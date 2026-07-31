@@ -1,0 +1,62 @@
+{
+  "profileVersion": 1,
+  "Discord": {
+    "GuildId": "667956000757776390"
+  },
+  "Steward": {
+    "ProfileName": "example-disposable-operator",
+    "DataPath": "data/servers/disposable/operations.db",
+    "AssetInboxPath": "data/servers/disposable/asset-inbox",
+    "AssetVaultPath": "data/servers/disposable/assets",
+    "WebhookSecretVaultPath": "data/servers/disposable/webhook-secrets"
+  },
+  "schemaVersion": 3,
+  "toolAllowlist": [
+    "get_steward_capabilities",
+    "capture_guild_configuration_snapshot",
+    "compare_guild_configuration",
+    "get_bot_effective_permissions",
+    "get_guild",
+    "get_guild_configuration_snapshot",
+    "list_roles",
+    "get_role",
+    "list_channels",
+    "get_channel",
+    "list_channel_member_overwrites",
+    "lint_guild_configuration",
+    "explain_role_permissions",
+    "analyze_role_hierarchy",
+    "get_operation",
+    "list_operations",
+    "reconcile_operation",
+    "update_channel",
+    "list_automod_rules",
+    "get_automod_rule",
+    "get_onboarding",
+    "get_welcome_screen",
+    "list_scheduled_events",
+    "get_scheduled_event",
+    "list_bans",
+    "list_invites",
+    "list_integrations",
+    "list_webhooks",
+    "list_audit_events",
+    "list_guild_expressions",
+    "list_active_threads",
+    "get_thread"
+  ],
+  "riskGates": {
+    "sensitiveReads": true,
+    "reversibleWrites": true,
+    "personImpactingWrites": false,
+    "irreversibleWrites": false
+  },
+  "protectedResourceIds": [],
+  "protectedNamePrefixes": [
+    "discord-steward",
+    "example-protected-"
+  ],
+  "deniedPermissions": [
+    "Administrator"
+  ]
+}

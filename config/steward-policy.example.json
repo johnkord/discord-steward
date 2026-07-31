@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 3,
+  "toolAllowlist": [
+    "get_steward_capabilities",
+    "capture_guild_configuration_snapshot",
+    "compare_guild_configuration",
+    "get_bot_effective_permissions",
+    "get_guild",
+    "get_guild_configuration_snapshot",
+    "list_roles",
+    "get_role",
+    "list_channels",
+    "get_channel",
+    "lint_guild_configuration",
+    "explain_role_permissions",
+    "analyze_role_hierarchy",
+    "list_automod_rules",
+    "get_onboarding",
+    "get_welcome_screen",
+    "list_scheduled_events",
+    "list_guild_expressions"
+  ],
+  "riskGates": {
+    "sensitiveReads": false,
+    "reversibleWrites": false,
+    "personImpactingWrites": false,
+    "irreversibleWrites": false
+  },
+  "protectedResourceIds": [],
+  "protectedNamePrefixes": [
+    "discsteward",
+    "discord-steward",
+    "example-protected-"
+  ],
+  "deniedPermissions": [
+    "Administrator"
+  ]
+}
