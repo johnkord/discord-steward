@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 var commandArguments = args;
 var builder = Host.CreateApplicationBuilder(commandArguments.Length == 0 ? args : []);
@@ -166,9 +167,28 @@ mcpBuilder.WithRequestFilters(filters => filters.AddCallToolFilter(next => async
 mcpBuilder.WithTools(toolTypes: ManifestToolRegistry.Resolve(toolManifest));
 
 using var host = builder.Build();
+if (commandArguments.Length == 1 && string.Equals(commandArguments[0], "--probe", StringComparison.Ordinal))
+{
+    var capabilities = host.Services.GetRequiredService<StewardInfoTools>().GetCapabilities();
+    await Console.Out.WriteLineAsync(JsonSerializer.Serialize(new
+    {
+        status = "ready",
+        capabilities.Service,
+        capabilities.Version,
+        capabilities.Profile,
+        capabilities.ProfileDigest,
+        capabilities.AuthorizationMode,
+        capabilities.Mode,
+        capabilities.GuildId,
+        capabilities.ManifestDigest,
+        registeredToolCount = capabilities.RegisteredTools.Length
+    }, JsonSerializerOptions.Web));
+    return 0;
+}
+
 if (commandArguments.Length > 0)
 {
-    await Console.Error.WriteLineAsync("Discord Steward no longer exposes approval commands.");
+    await Console.Error.WriteLineAsync("Usage: DiscordSteward [--probe]");
     return 2;
 }
 

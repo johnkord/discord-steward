@@ -108,6 +108,17 @@ unset DISCORD_TOKEN
 
 Never paste the token into chat, an issue, source control, `mcp.json`, or a command literal that will remain in shell history.
 
+### Startup probe
+
+Use `--probe` to validate process startup, profile parsing, authorization mode, and immutable manifest construction without starting the stdio server or contacting Discord:
+
+```bash
+Steward__ProfilePath=config/profiles/unrestricted-autonomy.example.json \
+	dotnet run --project src/DiscordSteward/DiscordSteward.csproj -- --probe
+```
+
+The command writes one safe JSON record to stdout and exits `0` when configuration is ready. It never returns a bot token or contacts Discord.
+
 The default observer manifest needs only Discord `View Channels`. It does not need `Read Message History`, `View Audit Log`, `Administrator`, or a privileged Gateway intent. Message and member manifests report their additional permissions or privileged-intent requirements. The code does not create a Gateway connection.
 
 `update_channel` additionally requires `Manage Channels`. Never grant `Administrator`.
