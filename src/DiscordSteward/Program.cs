@@ -123,12 +123,24 @@ builder.Services.AddSingleton<GuildLinter>();
 builder.Services.AddSingleton<RoleHierarchyAnalyzer>();
 builder.Services.AddSingleton<ConfigurationAnalysisService>();
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton(_ => new SqliteOperationJournal(
-    builder.Configuration["Steward:DataPath"] ?? "data/discord-steward.db"));
-builder.Services.AddSingleton<IOperationJournal>(services =>
-    services.GetRequiredService<SqliteOperationJournal>());
-builder.Services.AddSingleton<IConfigurationSnapshotStore>(services =>
-    services.GetRequiredService<SqliteOperationJournal>());
+var journalPath = builder.Configuration["Steward:DataPath"] ?? "data/discord-steward.db";
+var journalBackend = OperationJournalBackendParser.Parse(builder.Configuration["Steward:JournalBackend"]);
+if (journalBackend == OperationJournalBackend.File)
+{
+    builder.Services.AddSingleton<FileBackedOperationJournal>(_ => new FileBackedOperationJournal(journalPath));
+    builder.Services.AddSingleton<IOperationJournal>(services =>
+        services.GetRequiredService<FileBackedOperationJournal>());
+    builder.Services.AddSingleton<IConfigurationSnapshotStore>(services =>
+        services.GetRequiredService<FileBackedOperationJournal>());
+}
+else
+{
+    builder.Services.AddSingleton<SqliteOperationJournal>(_ => new SqliteOperationJournal(journalPath));
+    builder.Services.AddSingleton<IOperationJournal>(services =>
+        services.GetRequiredService<SqliteOperationJournal>());
+    builder.Services.AddSingleton<IConfigurationSnapshotStore>(services =>
+        services.GetRequiredService<SqliteOperationJournal>());
+}
 builder.Services.AddSingleton<ChannelUpdateOperationExecutor>();
 builder.Services.AddSingleton<ICatalogMutationFamilyHandler, RoleMutationHandler>();
 builder.Services.AddSingleton<ICatalogMutationFamilyHandler, ChannelMutationHandler>();
