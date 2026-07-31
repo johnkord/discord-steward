@@ -12,7 +12,7 @@ namespace DiscordSteward.Discord;
 
 internal sealed class DiscordCatalogReader(
     DiscordOptions options,
-    DiscordRestSession session) : IDiscordCatalogReader, IDisposable
+    DiscordRestSession session) : IGuildCatalogReader, IDisposable
 {
     private const int MaximumTargetUsersBytes = 1_048_576;
     private const int MaximumTargetUsers = 10_000;

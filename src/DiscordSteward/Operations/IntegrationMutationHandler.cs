@@ -16,7 +16,7 @@ namespace DiscordSteward.Operations;
 internal sealed class IntegrationMutationHandler(
     DiscordApiTransport transport,
     IDiscordExtendedReader extendedReader,
-    IDiscordCatalogReader catalogReader,
+    IGuildCatalogReader catalogReader,
     IDiscordMessageReader messageReader,
     IDiscordGuildReader guildReader,
     IAssetVault assetVault,

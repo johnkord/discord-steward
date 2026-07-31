@@ -1,7 +1,2 @@
 [extend]
 useDefault = true
-
-[[allowlists]]
-description = "C# interface name is not a Discord client secret"
-paths = ['''^src/DiscordSteward/Discord/CatalogReadModels\.cs$''']
-regexes = ['''IDiscordGuildMutationStateReader''']

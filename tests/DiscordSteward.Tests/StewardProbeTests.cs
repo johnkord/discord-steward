@@ -57,7 +57,7 @@ public sealed class StewardProbeTests
             Assert.Equal("ready", root.GetProperty("status").GetString());
             Assert.Equal("UnrestrictedAutonomy", root.GetProperty("authorizationMode").GetString());
             Assert.Equal("unrestricted", root.GetProperty("mode").GetString());
-            Assert.Equal("667956000757776386", root.GetProperty("guildId").GetString());
+            Assert.Equal("100000000000000001", root.GetProperty("guildId").GetString());
             Assert.True(root.GetProperty("registeredToolCount").GetInt32() > 0);
         }
     }

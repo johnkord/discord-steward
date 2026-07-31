@@ -129,7 +129,7 @@ public sealed class SqliteOperationJournalTests
                     id, schema_version, guild_id, created_at, intent, policy_digest,
                     resource_id, plan_digest, plan_json, status, approval_mode)
                 VALUES (
-                    '01900000000070008000000000000000', 1, '667956000757776386',
+                    '01900000000070008000000000000000', 1, '100000000000000001',
                     '2026-07-25T11:00:00.0000000+00:00', 'Legacy intent',
                     'legacy-policy', '20', 'legacy-digest', '{}', 'succeeded',
                     'externalApproval');
@@ -172,7 +172,7 @@ public sealed class SqliteOperationJournalTests
         var databasePath = Path.Combine(directory.Path, "operations.db");
         var snapshot = new StoredConfigurationSnapshot(
             "01900000-0000-7000-8000-000000000333",
-            "667956000757776386",
+            "100000000000000001",
             "snapshot-digest",
             CreatedAt,
             "{\"id\":\"guild\"}");
@@ -191,7 +191,7 @@ public sealed class SqliteOperationJournalTests
         SchemaVersion: 1,
         RequestId: "01900000-0000-7000-8000-000000000001",
         Kind: OperationKinds.ChannelUpdate,
-        GuildId: "667956000757776386",
+        GuildId: "100000000000000001",
         ResourceId: "20",
         Reason: "Set the channel topic",
         Risk: "R3",

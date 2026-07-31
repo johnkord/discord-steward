@@ -22,9 +22,9 @@ public sealed class DiscordOptionsTests
     [Fact]
     public void FromValues_MissingToken_FailsClosed()
     {
-        var options = DiscordOptions.FromValues("667956000757776386", "   ");
+        var options = DiscordOptions.FromValues("100000000000000001", "   ");
 
-        Assert.Equal(667956000757776386UL, options.GuildId);
+        Assert.Equal(100000000000000001UL, options.GuildId);
         Assert.False(options.BotTokenConfigured);
         Assert.False(options.IsConfigured);
     }
@@ -33,7 +33,7 @@ public sealed class DiscordOptionsTests
     public void SecretOwningOptions_DoNotExposeTokenThroughTextOrJson()
     {
         const string token = "sensitive-token-value";
-        var options = DiscordOptions.FromValues("667956000757776386", token);
+        var options = DiscordOptions.FromValues("100000000000000001", token);
 
         var text = options.ToString();
         var json = JsonSerializer.Serialize(options);

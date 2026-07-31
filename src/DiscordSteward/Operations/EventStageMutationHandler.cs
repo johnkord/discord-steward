@@ -11,7 +11,7 @@ namespace DiscordSteward.Operations;
 internal sealed class EventStageMutationHandler(
     DiscordApiTransport transport,
     IDiscordExtendedReader extendedReader,
-    IDiscordCatalogReader catalogReader,
+    IGuildCatalogReader catalogReader,
     IDiscordMemberReader memberReader,
     IDiscordBotInspector botInspector,
     IAssetVault assetVault,

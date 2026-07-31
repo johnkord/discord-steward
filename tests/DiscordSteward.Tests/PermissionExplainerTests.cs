@@ -6,7 +6,7 @@ namespace DiscordSteward.Tests;
 
 public sealed class PermissionExplainerTests
 {
-    private const ulong GuildId = 667956000757776386UL;
+    private const ulong GuildId = 100000000000000001UL;
 
     [Fact]
     public void ExplainRole_AppliesEveryoneThenCombinedRoleOverwrite()

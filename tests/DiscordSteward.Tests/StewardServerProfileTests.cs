@@ -7,11 +7,11 @@ namespace DiscordSteward.Tests;
 public sealed class StewardServerProfileTests
 {
     [Theory]
-    [InlineData("all-tools.example.json", "example-all-tools", "667956000757776386", 173)]
-    [InlineData("observer.example.json", "example-observer", "667956000757776386", 29)]
-    [InlineData("channel-operator.example.json", "example-channel-operator", "667956000757776386", 11)]
-    [InlineData("community-operator.example.json", "example-community-operator", "667956000757776386", 31)]
-    [InlineData("disposable-operator.example.json", "example-disposable-operator", "667956000757776390", 32)]
+    [InlineData("all-tools.example.json", "example-all-tools", "100000000000000001", 173)]
+    [InlineData("observer.example.json", "example-observer", "100000000000000001", 29)]
+    [InlineData("channel-operator.example.json", "example-channel-operator", "100000000000000001", 11)]
+    [InlineData("community-operator.example.json", "example-community-operator", "100000000000000001", 31)]
+    [InlineData("disposable-operator.example.json", "example-disposable-operator", "100000000000000004", 32)]
     public void CheckedInProfile_IsValidAndContainsNoCredential(
         string filename,
         string expectedName,
@@ -83,7 +83,7 @@ public sealed class StewardServerProfileTests
             new StewardRiskGates(false, false, false, false),
             mode);
         var policy = StewardPolicy.Create(
-            ["667956000757776387"],
+            ["100000000000000002"],
             ["example-protected-"],
             ["Administrator"],
             mode);

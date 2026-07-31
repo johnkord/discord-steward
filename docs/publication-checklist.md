@@ -56,6 +56,8 @@ GITLEAKS_BIN=/path/to/gitleaks scripts/audit-public-repo.sh
 
 Classify every match. Source references to credential APIs and synthetic test fixtures are expected; credential values and deployment identifiers are not.
 
+Use `.gitleaksignore` only for an exact, reviewed false-positive fingerprint that already exists in history. Do not silence an entire rule, path, commit, or credential-shaped pattern to make an audit pass.
+
 Also check the commit author email. Use a public or provider-generated no-reply address if the configured Git email is private.
 
 ## If sensitive data reached Git

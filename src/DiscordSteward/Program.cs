@@ -114,7 +114,7 @@ builder.Services.AddSingleton<IDiscordBotInspector, DiscordBotInspector>();
 builder.Services.AddSingleton<IDiscordHttpApi, DiscordHttpApi>();
 builder.Services.AddSingleton<IDiscordExtendedReader, DiscordExtendedReader>();
 builder.Services.AddSingleton<DiscordCatalogReader>();
-builder.Services.AddSingleton<IDiscordCatalogReader>(services => services.GetRequiredService<DiscordCatalogReader>());
+builder.Services.AddSingleton<IGuildCatalogReader>(services => services.GetRequiredService<DiscordCatalogReader>());
 builder.Services.AddSingleton<IDiscordGuildMutationStateReader>(services => services.GetRequiredService<DiscordCatalogReader>());
 builder.Services.AddSingleton<IDiscordChannelStateReader, DiscordChannelStateReader>();
 builder.Services.AddSingleton<IDiscordMessageReader, DiscordMessageReader>();

@@ -12,7 +12,7 @@ namespace DiscordSteward.Tests;
 
 public sealed class DiscordReadToolsTests
 {
-    private const ulong GuildId = 667956000757776386UL;
+    private const ulong GuildId = 100000000000000001UL;
 
     [Fact]
     public async Task ReadTools_ReturnFreshGuildBoundData()
@@ -29,7 +29,7 @@ public sealed class DiscordReadToolsTests
             "21");
 
         Assert.Equal("ok", snapshotResult.Outcome);
-        Assert.Equal("667956000757776386", snapshotResult.Guild?.Id);
+        Assert.Equal("100000000000000001", snapshotResult.Guild?.Id);
         Assert.Equal("role", roleResult.Data?.Name);
         Assert.Equal("category", channelResult.Data?.ResourceType);
         Assert.NotNull(lintResult.Data);

@@ -14,7 +14,7 @@ internal sealed class CommunityMutationHandler(
     DiscordApiTransport transport,
     IDiscordGuildReader guildReader,
     IDiscordExtendedReader extendedReader,
-    IDiscordCatalogReader catalogReader,
+    IGuildCatalogReader catalogReader,
     IAssetVault assetVault,
     StewardRuntimeSettings settings,
     TimeProvider timeProvider) : ICatalogMutationFamilyHandler

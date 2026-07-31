@@ -10,7 +10,7 @@ public sealed class StewardInfoToolsTests
     [Fact]
     public async Task GetStatus_ReportsReadOnlyCapabilitiesWithoutCredentials()
     {
-        var options = DiscordOptions.FromValues("667956000757776386", "sensitive-token-value");
+        var options = DiscordOptions.FromValues("100000000000000001", "sensitive-token-value");
         await using var session = new Discord.DiscordRestSession(options);
         var tools = new StewardInfoTools(
             StewardRuntimeSettings.FromOptions(options),
@@ -30,7 +30,7 @@ public sealed class StewardInfoToolsTests
         Assert.Equal("observer", status.Mode);
         Assert.Equal("InteractiveApproval", status.AuthorizationMode);
         Assert.Equal("test-observer", status.Profile);
-        Assert.Equal("667956000757776386", status.GuildId);
+        Assert.Equal("100000000000000001", status.GuildId);
         Assert.Equal("not_checked", status.DiscordReadiness.State);
         Assert.Equal(0, status.Policy.ProtectedResourceCount);
         Assert.Equal(2, status.Policy.ProtectedNamePrefixCount);
@@ -46,7 +46,7 @@ public sealed class StewardInfoToolsTests
     [Fact]
     public async Task GetStatus_ReportsUnrestrictedModeAndCompleteCatalog()
     {
-        var options = DiscordOptions.FromValues("667956000757776386", "sensitive-token-value");
+        var options = DiscordOptions.FromValues("100000000000000001", "sensitive-token-value");
         await using var session = new Discord.DiscordRestSession(options);
         var manifest = StewardToolManifest.Create(
             ["*"],
@@ -81,7 +81,7 @@ public sealed class StewardInfoToolsTests
         var tool = new GetBotEffectivePermissionsTool(
             inspector,
             manifest,
-            new StewardRuntimeSettings(667956000757776386UL, DiscordTokenConfigured: false));
+            new StewardRuntimeSettings(100000000000000001UL, DiscordTokenConfigured: false));
 
         var result = await tool.GetPermissions(CancellationToken.None);
 
@@ -96,7 +96,7 @@ public sealed class StewardInfoToolsTests
         var inspector = new FakeBotInspector
         {
             Result = new BotEffectivePermissions(
-                "667956000757776386",
+                "100000000000000001",
                 "42",
                 ["ManageWebhooks", "ViewChannel"],
                 "10",
@@ -110,7 +110,7 @@ public sealed class StewardInfoToolsTests
         var tool = new GetBotEffectivePermissionsTool(
             inspector,
             manifest,
-            new StewardRuntimeSettings(667956000757776386UL, DiscordTokenConfigured: true));
+            new StewardRuntimeSettings(100000000000000001UL, DiscordTokenConfigured: true));
 
         var result = await tool.GetPermissions(CancellationToken.None);
 
@@ -122,7 +122,7 @@ public sealed class StewardInfoToolsTests
     private sealed class FakeBotInspector : IDiscordBotInspector
     {
         public BotEffectivePermissions Result { get; set; } = new(
-            "667956000757776386",
+            "100000000000000001",
             "42",
             ImmutableArray<string>.Empty,
             HighestRoleId: null,

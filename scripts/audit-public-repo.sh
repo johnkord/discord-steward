@@ -13,7 +13,7 @@ if [[ -n "$private_files" ]]; then
   exit 1
 fi
 
-allowed_snowflakes='^(667956000757776386|667956000757776387|667956000757776388|667956000757776390)$'
+allowed_snowflakes='^(100000000000000001|100000000000000002|100000000000000003|100000000000000004)$'
 unexpected_snowflakes="$(
   git grep --cached -h -o -E '\b[0-9]{17,20}\b' -- . 2>/dev/null |
     sort -u |

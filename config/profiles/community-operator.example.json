@@ -1,7 +1,7 @@
 {
   "profileVersion": 1,
   "Discord": {
-    "GuildId": "667956000757776386"
+    "GuildId": "100000000000000001"
   },
   "Steward": {
     "ProfileName": "example-community-operator",
@@ -51,8 +51,8 @@
     "irreversibleWrites": true
   },
   "protectedResourceIds": [
-    "667956000757776387",
-    "667956000757776388"
+    "100000000000000002",
+    "100000000000000003"
   ],
   "protectedNamePrefixes": [
     "discord-steward",

@@ -5808,7 +5808,7 @@ public sealed class LiveDiscordSmokeTests(ITestOutputHelper output)
             return;
         }
 
-        const string channelId = "667956000757776388";
+        const string channelId = "100000000000000003";
         var names = new[]
         {
             "get_operation",

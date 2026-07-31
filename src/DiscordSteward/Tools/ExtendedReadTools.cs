@@ -9,7 +9,7 @@ namespace DiscordSteward.Tools;
 
 public sealed class ExtendedReadTools(
     IDiscordExtendedReader reader,
-    IDiscordCatalogReader catalogReader,
+    IGuildCatalogReader catalogReader,
     IOperationJournal journal,
     StewardRuntimeSettings settings)
 {

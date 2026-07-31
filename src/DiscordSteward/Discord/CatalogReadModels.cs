@@ -98,7 +98,7 @@ public sealed record InviteTargetUserJobView(
     DateTimeOffset? CompletedAt,
     string? ErrorMessage);
 
-public interface IDiscordCatalogReader : IDiscordGuildMutationStateReader
+public interface IGuildCatalogReader : IDiscordGuildMutationStateReader
 {
     Task<GuildWidgetView> GetGuildWidgetAsync(CancellationToken cancellationToken);
 

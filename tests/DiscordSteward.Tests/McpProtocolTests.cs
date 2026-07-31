@@ -89,7 +89,7 @@ public sealed class McpProtocolTests
         using var document = JsonDocument.Parse(content.Text);
         var root = document.RootElement;
         Assert.Equal("example-observer", root.GetProperty("profile").GetString());
-        Assert.Equal("667956000757776386", root.GetProperty("guildId").GetString());
+        Assert.Equal("100000000000000001", root.GetProperty("guildId").GetString());
         Assert.Equal("unconfigured-observer", root.GetProperty("mode").GetString());
         Assert.False(root.GetProperty("discordTokenConfigured").GetBoolean());
         Assert.False(root.GetProperty("riskGates").GetProperty("reversibleWrites").GetBoolean());
@@ -772,7 +772,7 @@ public sealed class McpProtocolTests
         environment["Discord__BotToken"] = string.Empty;
         if (profilePath is null)
         {
-            environment["Discord__GuildId"] = "667956000757776386";
+            environment["Discord__GuildId"] = "100000000000000001";
             environment["Steward__PolicyPath"] = "config/nonexistent-test-policy.json";
         }
         else

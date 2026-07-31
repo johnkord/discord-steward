@@ -9,7 +9,7 @@ namespace DiscordSteward.Tests;
 
 public sealed class ChannelUpdateOperationExecutorTests
 {
-    private const ulong GuildId = 667956000757776386UL;
+    private const ulong GuildId = 100000000000000001UL;
     private static readonly DateTimeOffset Now = DateTimeOffset.Parse(
         "2026-07-25T12:00:00Z",
         System.Globalization.CultureInfo.InvariantCulture);

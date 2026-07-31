@@ -11,7 +11,7 @@ public sealed class DiscordRestSessionTests
     public async Task GetGuildAsync_Unconfigured_FailsBeforeNetworkAccess()
     {
         await using var session = new DiscordRestSession(
-            DiscordOptions.FromValues("667956000757776386", botToken: null));
+            DiscordOptions.FromValues("100000000000000001", botToken: null));
 
         var exception = await Assert.ThrowsAsync<StewardException>(
             () => session.GetGuildAsync(CancellationToken.None));

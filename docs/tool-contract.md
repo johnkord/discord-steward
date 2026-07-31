@@ -105,7 +105,7 @@ Use this common shape where practical:
   "schemaVersion": 1,
   "outcome": "succeeded",
   "guild": {
-    "id": "667956000757776386",
+    "id": "100000000000000001",
     "name": "Example Guild"
   },
   "data": {},

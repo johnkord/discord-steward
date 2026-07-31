@@ -21,9 +21,9 @@ public sealed class StewardRuntimeSettingsTests
     [Fact]
     public void FromValues_ValidGuildAndToken_IsConfigured()
     {
-        var settings = StewardRuntimeSettings.FromValues("667956000757776386", "a-token");
+        var settings = StewardRuntimeSettings.FromValues("100000000000000001", "a-token");
 
-        Assert.Equal(667956000757776386UL, settings.GuildId);
+        Assert.Equal(100000000000000001UL, settings.GuildId);
         Assert.True(settings.DiscordTokenConfigured);
         Assert.True(settings.IsConfigured);
     }
@@ -31,9 +31,9 @@ public sealed class StewardRuntimeSettingsTests
     [Fact]
     public void FromValues_MissingToken_RemainsUnconfigured()
     {
-        var settings = StewardRuntimeSettings.FromValues("667956000757776386", "   ");
+        var settings = StewardRuntimeSettings.FromValues("100000000000000001", "   ");
 
-        Assert.Equal(667956000757776386UL, settings.GuildId);
+        Assert.Equal(100000000000000001UL, settings.GuildId);
         Assert.False(settings.DiscordTokenConfigured);
         Assert.False(settings.IsConfigured);
     }

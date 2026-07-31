@@ -7,7 +7,7 @@ namespace DiscordSteward.Tests;
 
 public sealed class RoleHierarchyAnalyzerTests
 {
-    private const ulong GuildId = 667956000757776386UL;
+    private const ulong GuildId = 100000000000000001UL;
 
     [Fact]
     public async Task AnalyzeAsync_ExplainsManageableAndBlockedRolesWithoutMembers()
