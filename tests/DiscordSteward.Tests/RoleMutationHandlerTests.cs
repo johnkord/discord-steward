@@ -131,9 +131,63 @@ public sealed class RoleMutationHandlerTests
         Assert.Equal(1, fixture.Http.MutationCount);
     }
 
+    [Fact]
+    public async Task SetRolePermissions_AllowsAdministratorAtEqualPositionWhenBotRoleIdRanksHigher()
+    {
+        await using var fixture = CreateFixture(
+            enhancedColors: false,
+            bot: new BotEffectivePermissions(
+                "123",
+                "999",
+                ["Administrator"],
+                "400",
+                "Steward",
+                HighestRolePosition: 1,
+                HasAdministrator: true));
+        var role = fixture.Snapshot.Roles.Single(item => !item.IsEveryone);
+        var invocation = CatalogMutationInvocation.Create(
+            Guid.CreateVersion7().ToString("D"),
+            "set_role_permissions",
+            role.Id,
+            "update equal-position role",
+            new SetRolePermissionsInput(role.StateDigest, ["ViewChannel"]));
+
+        var preparation = await fixture.Handler.PrepareAsync(invocation, CancellationToken.None);
+
+        Assert.NotNull(preparation);
+    }
+
+    [Fact]
+    public async Task SetRolePermissions_RejectsEqualPositionWhenTargetRoleRanksHigher()
+    {
+        await using var fixture = CreateFixture(
+            enhancedColors: false,
+            bot: new BotEffectivePermissions(
+                "123",
+                "999",
+                ["Administrator"],
+                "999",
+                "Steward",
+                HighestRolePosition: 1,
+                HasAdministrator: true));
+        var role = fixture.Snapshot.Roles.Single(item => !item.IsEveryone);
+        var invocation = CatalogMutationInvocation.Create(
+            Guid.CreateVersion7().ToString("D"),
+            "set_role_permissions",
+            role.Id,
+            "update higher equal-position role",
+            new SetRolePermissionsInput(role.StateDigest, ["ViewChannel"]));
+
+        var exception = await Assert.ThrowsAsync<StewardException>(() =>
+            fixture.Handler.PrepareAsync(invocation, CancellationToken.None));
+
+        Assert.Equal(StewardErrorCodes.PolicyDenied, exception.Code);
+    }
+
     private static Fixture CreateFixture(
         bool enhancedColors,
-        StewardAuthorizationMode authorizationMode = StewardAuthorizationMode.InteractiveApproval)
+        StewardAuthorizationMode authorizationMode = StewardAuthorizationMode.InteractiveApproval,
+        BotEffectivePermissions? bot = null)
     {
         var everyone = RoleSnapshot.Create(
             123,
@@ -177,7 +231,7 @@ public sealed class RoleMutationHandlerTests
             transport,
             new InMemoryDiscordGuildReader(snapshot),
             memberReader: null!,
-            new FakeInspector(),
+            new FakeInspector(bot),
             analysisService: null!,
             assetVault: null!,
             StewardPolicy.Create([], [], [], authorizationMode),
@@ -185,10 +239,10 @@ public sealed class RoleMutationHandlerTests
         return new Fixture(handler, snapshot, transport, session, http);
     }
 
-    private sealed class FakeInspector : IDiscordBotInspector
+    private sealed class FakeInspector(BotEffectivePermissions? result) : IDiscordBotInspector
     {
         public Task<BotEffectivePermissions> GetEffectivePermissionsAsync(CancellationToken cancellationToken) =>
-            Task.FromResult(new BotEffectivePermissions(
+            Task.FromResult(result ?? new BotEffectivePermissions(
                 "123",
                 "999",
                 ["ManageRoles"],

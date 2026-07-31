@@ -15,4 +15,8 @@ public sealed record BotEffectivePermissions(
     string? HighestRoleId,
     string? HighestRoleName,
     int? HighestRolePosition,
-    bool HasAdministrator);
+    bool HasAdministrator)
+{
+    public bool HasPermission(string permission) =>
+        HasAdministrator || EffectivePermissions.Contains(permission, StringComparer.Ordinal);
+}

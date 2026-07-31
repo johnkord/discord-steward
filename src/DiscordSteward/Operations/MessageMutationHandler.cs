@@ -387,7 +387,7 @@ internal sealed class MessageMutationHandler(
 
         ValidateAllowedMentions(input.AllowedMentions);
         var bot = await botInspector.GetEffectivePermissionsAsync(cancellationToken).ConfigureAwait(false);
-        if (input.Tts && !bot.EffectivePermissions.Contains("SendTTSMessages", StringComparer.Ordinal))
+        if (input.Tts && !bot.HasPermission("SendTTSMessages"))
         {
             throw new StewardException(
                 StewardErrorCodes.DiscordPermissionDenied,

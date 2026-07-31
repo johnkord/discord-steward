@@ -297,7 +297,7 @@ internal sealed class EventStageMutationHandler(
         if (input.SendStartNotification)
         {
             var bot = await botInspector.GetEffectivePermissionsAsync(cancellationToken).ConfigureAwait(false);
-            if (!bot.EffectivePermissions.Contains("MentionEveryone", StringComparer.Ordinal))
+            if (!bot.HasPermission("MentionEveryone"))
             {
                 throw new StewardException(
                     StewardErrorCodes.DiscordPermissionDenied,

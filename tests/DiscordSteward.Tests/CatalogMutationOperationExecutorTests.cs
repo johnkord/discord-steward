@@ -93,6 +93,7 @@ public sealed class CatalogMutationOperationExecutorTests
             adapter,
             journal,
             hasAdministrator: true,
+            effectivePermissions: ["Administrator"],
             authorizationMode: StewardAuthorizationMode.UnrestrictedAutonomy,
             protectedResourceIds: ["999"]);
 

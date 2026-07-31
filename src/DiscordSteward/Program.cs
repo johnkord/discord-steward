@@ -181,6 +181,9 @@ if (commandArguments.Length == 1 && string.Equals(commandArguments[0], "--probe"
         capabilities.Mode,
         capabilities.GuildId,
         capabilities.ManifestDigest,
+        protectedResourceCount = capabilities.Policy.ProtectedResourceCount,
+        protectedNamePrefixCount = capabilities.Policy.ProtectedNamePrefixCount,
+        deniedPermissionCount = capabilities.Policy.DeniedPermissionCount,
         registeredToolCount = capabilities.RegisteredTools.Length
     }, JsonSerializerOptions.Web));
     return 0;

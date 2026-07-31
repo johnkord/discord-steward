@@ -165,7 +165,7 @@ public sealed class ChannelUpdateOperationExecutor(
                     $"The Steward bot holds permissions denied by local policy: {string.Join(", ", deniedHeldPermissions)}.");
             }
 
-            if (!preflight.HasManageChannels)
+            if (!preflight.HasManageChannels && !preflight.HasAdministrator)
             {
                 throw new StewardException(
                     StewardErrorCodes.DiscordPermissionDenied,

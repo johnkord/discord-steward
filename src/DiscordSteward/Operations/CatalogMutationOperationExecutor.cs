@@ -366,7 +366,7 @@ public sealed class CatalogMutationOperationExecutor(
 
         var missing = StewardToolManifest.GetRequiredDiscordPermissions(toolName)
             .Where(permission => !permission.EndsWith("Intent", StringComparison.Ordinal))
-            .Where(permission => !actual.Contains(permission))
+            .Where(permission => !observed.HasPermission(permission))
             .ToArray();
         if (missing.Length > 0)
         {

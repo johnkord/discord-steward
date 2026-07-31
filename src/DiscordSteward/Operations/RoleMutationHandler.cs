@@ -303,7 +303,7 @@ internal sealed class RoleMutationHandler(
         {
             var role = snapshot.Roles.SingleOrDefault(role => role.Id == item.RoleId) ?? throw NotFound();
             EnsureMutable(role);
-            if (role.Position >= ceiling || item.Position >= ceiling)
+            if (!IsStrictlyBelowBotRole(role, bot) || item.Position >= ceiling)
             {
                 throw PolicyDenied("Role reorder cannot cross or reach the bot's highest role.");
             }
@@ -478,8 +478,7 @@ internal sealed class RoleMutationHandler(
         var role = snapshot.Roles.SingleOrDefault(item => item.Id == normalizedId) ?? throw NotFound();
         EnsureMutable(role);
         var bot = await botInspector.GetEffectivePermissionsAsync(cancellationToken).ConfigureAwait(false);
-        if (!bot.EffectivePermissions.Contains("ManageRoles", StringComparer.Ordinal) ||
-            !bot.HighestRolePosition.HasValue || role.Position >= bot.HighestRolePosition.Value)
+        if (!bot.HasPermission("ManageRoles") || !IsStrictlyBelowBotRole(role, bot))
         {
             throw PolicyDenied("The bot cannot manage the requested role under Discord hierarchy rules.");
         }
@@ -494,6 +493,24 @@ internal sealed class RoleMutationHandler(
         {
             throw PolicyDenied("The requested role is everyone, managed, or protected by Steward policy.");
         }
+    }
+
+    private static bool IsStrictlyBelowBotRole(RoleSnapshot role, BotEffectivePermissions bot)
+    {
+        if (!bot.HighestRolePosition.HasValue || string.IsNullOrWhiteSpace(bot.HighestRoleId))
+        {
+            return false;
+        }
+
+        if (role.Position != bot.HighestRolePosition.Value)
+        {
+            return role.Position < bot.HighestRolePosition.Value;
+        }
+
+        // Discord resolves equal raw positions by snowflake order: the lower ID ranks higher.
+        return ulong.TryParse(role.Id, out var roleId) &&
+            ulong.TryParse(bot.HighestRoleId, out var botRoleId) &&
+            roleId > botRoleId;
     }
 
     private static void EnsureCompleteShiftSet(
