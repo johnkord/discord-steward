@@ -81,6 +81,8 @@ public sealed class CatalogMutationTools(
     {
         StewardErrorCodes.StateConflict => "Discord state did not match the approved call.",
         StewardErrorCodes.DiscordPermissionDenied => "The Steward bot lacks a required Discord permission.",
+        StewardErrorCodes.GuildFeatureUnavailable =>
+            "The Discord guild lacks a required feature; retry without optional feature-dependent fields.",
         StewardErrorCodes.OutcomeUnknown => "The Discord write outcome remains unknown; use reconcile_operation.",
         StewardErrorCodes.PartialFailure => "Discord state did not match either the before or desired state.",
         _ => "The Discord operation did not reach a verified successful outcome."

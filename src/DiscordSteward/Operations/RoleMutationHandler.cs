@@ -189,6 +189,7 @@ internal sealed class RoleMutationHandler(
             input.SecondaryColorHex,
             input.TertiaryColorHex,
             snapshot.Features);
+        EnsureRoleDecorationAvailable(snapshot.Features, input.IconAssetId, input.UnicodeEmoji);
         await ValidateIconAsync(input.IconAssetId, input.UnicodeEmoji, cancellationToken).ConfigureAwait(false);
         var before = new RoleOrderState(
             ResourceStateCanonicalizer.ComputeRolesDigest(snapshot.Roles),
@@ -230,6 +231,7 @@ internal sealed class RoleMutationHandler(
             throw InvalidArgument("The same role appearance field cannot be set and cleared.");
         }
 
+    EnsureRoleDecorationAvailable(snapshot.Features, input.Set.IconAssetId, input.Set.UnicodeEmoji);
         await ValidateIconAsync(input.Set.IconAssetId, input.Set.UnicodeEmoji, cancellationToken).ConfigureAwait(false);
         var before = RoleVerificationState.FromRole(role);
         var clearAllColors = clear.Contains("color") || clear.Contains("colors");
@@ -730,6 +732,25 @@ internal sealed class RoleMutationHandler(
 
     private static string NormalizeFeatureName(string value) => new(
         value.Where(char.IsAsciiLetterOrDigit).Select(char.ToUpperInvariant).ToArray());
+
+    private static void EnsureRoleDecorationAvailable(
+        ImmutableArray<string>? features,
+        string? iconAssetId,
+        string? unicodeEmoji)
+    {
+        if (iconAssetId is null && unicodeEmoji is null)
+        {
+            return;
+        }
+
+        if (!features.HasValue || !features.Value.Any(feature =>
+                string.Equals(NormalizeFeatureName(feature), "ROLEICONS", StringComparison.Ordinal)))
+        {
+            throw new StewardException(
+                StewardErrorCodes.GuildFeatureUnavailable,
+                "Role icon and Unicode emoji decoration require the ROLE_ICONS guild feature; retry without decoration.");
+        }
+    }
 
     private static Dictionary<string, object?> RoleColorsPayload(RoleColorsState colors) => new(StringComparer.Ordinal)
     {

@@ -132,6 +132,134 @@ public sealed class RoleMutationHandlerTests
     }
 
     [Fact]
+    public async Task CreateRole_WithoutRoleIconsFeature_ReturnsSpecificPreflightThenAllowsUndecoratedFallback()
+    {
+        await using var fixture = CreateFixture(enhancedColors: false);
+        var rolesDigest = ResourceStateCanonicalizer.ComputeRolesDigest(fixture.Snapshot.Roles);
+        var decorated = CatalogMutationInvocation.Create(
+            Guid.CreateVersion7().ToString("D"),
+            "create_role",
+            fixture.Snapshot.Id,
+            "create decorated role",
+            new CreateRoleInput(
+                rolesDigest,
+                "Imperial Clerk",
+                Permissions: [],
+                ColorHex: null,
+                IsHoisted: false,
+                IsMentionable: false,
+                IconAssetId: null,
+                UnicodeEmoji: "🥚"));
+
+        var exception = await Assert.ThrowsAsync<StewardException>(() =>
+            fixture.Handler.PrepareAsync(decorated, CancellationToken.None));
+
+        Assert.Equal(StewardErrorCodes.GuildFeatureUnavailable, exception.Code);
+        Assert.Contains("retry without decoration", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, fixture.Http.MutationCount);
+
+        var undecorated = CatalogMutationInvocation.Create(
+            Guid.CreateVersion7().ToString("D"),
+            "create_role",
+            fixture.Snapshot.Id,
+            "fallback without decoration",
+            new CreateRoleInput(
+                rolesDigest,
+                "Imperial Clerk",
+                Permissions: [],
+                ColorHex: null,
+                IsHoisted: false,
+                IsMentionable: false,
+                IconAssetId: null,
+                UnicodeEmoji: null));
+        var preparation = await fixture.Handler.PrepareAsync(undecorated, CancellationToken.None);
+        await fixture.Handler.WriteAsync(undecorated, preparation, CancellationToken.None);
+
+        Assert.Equal(1, fixture.Http.MutationCount);
+        Assert.False(fixture.Http.LastBody!.ContainsKey("unicode_emoji"));
+        Assert.False(fixture.Http.LastBody.ContainsKey("icon"));
+    }
+
+    [Fact]
+    public async Task UpdateAppearance_WithoutRoleIconsFeature_StopsBeforeDiscordWrite()
+    {
+        await using var fixture = CreateFixture(enhancedColors: false);
+        var role = fixture.Snapshot.Roles.Single(item => !item.IsEveryone);
+        var invocation = CatalogMutationInvocation.Create(
+            Guid.CreateVersion7().ToString("D"),
+            "update_role_appearance",
+            role.Id,
+            "decorate existing role",
+            new UpdateRoleAppearanceInput(
+                role.StateDigest,
+                new RoleAppearanceSet(
+                    Name: null,
+                    ColorHex: null,
+                    IsHoisted: null,
+                    IsMentionable: null,
+                    IconAssetId: null,
+                    UnicodeEmoji: "🥚"),
+                Clear: []));
+
+        var exception = await Assert.ThrowsAsync<StewardException>(() =>
+            fixture.Handler.PrepareAsync(invocation, CancellationToken.None));
+
+        Assert.Equal(StewardErrorCodes.GuildFeatureUnavailable, exception.Code);
+        Assert.Equal(0, fixture.Http.MutationCount);
+    }
+
+    [Fact]
+    public async Task CreateRole_WithoutRoleIconsFeature_RejectsIconBeforeAssetLookup()
+    {
+        await using var fixture = CreateFixture(enhancedColors: false);
+        var invocation = CatalogMutationInvocation.Create(
+            Guid.CreateVersion7().ToString("D"),
+            "create_role",
+            fixture.Snapshot.Id,
+            "create icon role",
+            new CreateRoleInput(
+                ResourceStateCanonicalizer.ComputeRolesDigest(fixture.Snapshot.Roles),
+                "Imperial Clerk",
+                Permissions: [],
+                ColorHex: null,
+                IsHoisted: false,
+                IsMentionable: false,
+                IconAssetId: "asset-1",
+                UnicodeEmoji: null));
+
+        var exception = await Assert.ThrowsAsync<StewardException>(() =>
+            fixture.Handler.PrepareAsync(invocation, CancellationToken.None));
+
+        Assert.Equal(StewardErrorCodes.GuildFeatureUnavailable, exception.Code);
+        Assert.Equal(0, fixture.Http.MutationCount);
+    }
+
+    [Fact]
+    public async Task CreateRole_WithRoleIconsFeature_AllowsUnicodeDecoration()
+    {
+        await using var fixture = CreateFixture(enhancedColors: false, roleIcons: true);
+        var invocation = CatalogMutationInvocation.Create(
+            Guid.CreateVersion7().ToString("D"),
+            "create_role",
+            fixture.Snapshot.Id,
+            "create decorated role",
+            new CreateRoleInput(
+                ResourceStateCanonicalizer.ComputeRolesDigest(fixture.Snapshot.Roles),
+                "Imperial Clerk",
+                Permissions: [],
+                ColorHex: null,
+                IsHoisted: false,
+                IsMentionable: false,
+                IconAssetId: null,
+                UnicodeEmoji: "🥚"));
+
+        var preparation = await fixture.Handler.PrepareAsync(invocation, CancellationToken.None);
+        await fixture.Handler.WriteAsync(invocation, preparation, CancellationToken.None);
+
+        Assert.Equal("🥚", fixture.Http.LastBody!["unicode_emoji"]!.GetValue<string>());
+    }
+
+    [Fact]
     public async Task SetRolePermissions_AllowsAdministratorAtEqualPositionWhenBotRoleIdRanksHigher()
     {
         await using var fixture = CreateFixture(
@@ -187,7 +315,8 @@ public sealed class RoleMutationHandlerTests
     private static Fixture CreateFixture(
         bool enhancedColors,
         StewardAuthorizationMode authorizationMode = StewardAuthorizationMode.InteractiveApproval,
-        BotEffectivePermissions? bot = null)
+        BotEffectivePermissions? bot = null,
+        bool roleIcons = false)
     {
         var everyone = RoleSnapshot.Create(
             123,
@@ -213,13 +342,16 @@ public sealed class RoleMutationHandlerTests
             colorHex: "#112233",
             isHoisted: false,
             isMentionable: false);
+        var features = new List<string>();
+        if (enhancedColors) features.Add("EnhancedRoleColors");
+        if (roleIcons) features.Add("ROLE_ICONS");
         var snapshot = GuildSnapshot.Create(
             123,
             "Guild",
             ownerId: 1,
             description: null,
             DateTimeOffset.UnixEpoch,
-            enhancedColors ? ["EnhancedRoleColors"] : [],
+            features,
             [everyone, role],
             categories: [],
             channels: []);

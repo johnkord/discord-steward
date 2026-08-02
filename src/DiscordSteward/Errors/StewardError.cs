@@ -7,6 +7,7 @@ public static class StewardErrorCodes
     public const string ToolNotEnabled = "tool_not_enabled";
     public const string DiscordAuthenticationFailed = "discord_authentication_failed";
     public const string DiscordPermissionDenied = "discord_permission_denied";
+    public const string GuildFeatureUnavailable = "guild_feature_unavailable";
     public const string GuildMismatch = "guild_mismatch";
     public const string ResourceNotFound = "resource_not_found";
     public const string ResultTooLarge = "result_too_large";
