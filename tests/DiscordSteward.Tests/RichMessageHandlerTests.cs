@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using DiscordSteward.Configuration;
 using DiscordSteward.Discord;
+using DiscordSteward.Errors;
 using DiscordSteward.Operations;
 using DiscordSteward.Secrets;
 
@@ -13,6 +14,48 @@ namespace DiscordSteward.Tests;
 
 public sealed class RichMessageHandlerTests
 {
+    [Theory]
+    [InlineData("invented", "valid-nonce")]
+    [InlineData("new", "")]
+    [InlineData("new", "12345678901234567890123456")]
+    public async Task SendMessage_InvalidModeOrNonceFailsBeforeDiscordRequest(string mode, string nonce)
+    {
+        var options = DiscordOptions.FromValues("123", "test-token");
+        await using var session = new DiscordRestSession(options);
+        var http = new RecordingHandler(new Dictionary<string, string>());
+        using var transport = new DiscordApiTransport(options, session, http);
+        var handler = new MessageMutationHandler(
+            transport,
+            messageReader: null!,
+            new FakeInspector(),
+            assetVault: null!,
+            StewardRuntimeSettings.FromValues("123", "test-token"),
+            TimeProvider.System);
+        var input = new SendMessageInput(
+            ExpectedChannelStateDigest: "unused",
+            Mode: mode,
+            Content: "Hello",
+            SourceChannelId: null,
+            SourceMessageId: null,
+            ExpectedSourceMessageStateDigest: null,
+            new AllowedMentionsInput([], [], Everyone: false, RepliedUser: false),
+            AssetIds: [],
+            Nonce: nonce,
+            SuppressNotifications: false);
+        var invocation = CatalogMutationInvocation.Create(
+            Guid.CreateVersion7().ToString("D"),
+            "send_message",
+            "456",
+            "invalid preflight",
+            input);
+
+        var exception = await Assert.ThrowsAsync<StewardException>(() =>
+            handler.PrepareAsync(invocation, CancellationToken.None));
+
+        Assert.Equal(StewardErrorCodes.InvalidArgument, exception.Code);
+        Assert.Equal(0, http.RequestCount);
+    }
+
     [Fact]
     public async Task SendMessage_WritesRichCreateOnlyFieldsAndNamedFlags()
     {
@@ -282,6 +325,7 @@ public sealed class RichMessageHandlerTests
 
     private sealed class RecordingHandler(IReadOnlyDictionary<string, string> reads) : HttpMessageHandler
     {
+        internal int RequestCount { get; private set; }
         internal HttpMethod? LastMutationMethod { get; private set; }
 
         internal string? LastMutationRoute { get; private set; }
@@ -292,6 +336,7 @@ public sealed class RichMessageHandlerTests
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
+            RequestCount++;
             var route = request.RequestUri!.PathAndQuery;
             if (request.Method == HttpMethod.Get)
             {

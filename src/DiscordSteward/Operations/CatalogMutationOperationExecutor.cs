@@ -37,6 +37,7 @@ public sealed record CatalogMutationWriteReceipt(
 public enum CatalogMutationObservationKind
 {
     DesiredState,
+    AcceptedUnverifiable,
     BeforeState,
     UnexpectedState
 }
@@ -542,6 +543,11 @@ public sealed class CatalogMutationOperationExecutor(
                     : writeErrorCode is null ? "verified_desired_state" : "recovered_verified_desired_state",
                 ErrorCode: null,
                 Verified: true),
+            CatalogMutationObservationKind.AcceptedUnverifiable => new ObservationMapping(
+                OperationStatuses.Succeeded,
+                reconciliation ? "reconciled_accepted_unverifiable" : "accepted_unverifiable",
+                ErrorCode: null,
+                Verified: false),
             CatalogMutationObservationKind.BeforeState => new ObservationMapping(
                 OperationStatuses.Failed,
                 reconciliation ? "reconciled_verified_no_change" : "verified_no_change",
@@ -768,7 +774,8 @@ public sealed class CatalogMutationOperationExecutor(
         operation,
         operation.Status,
         operation.Outcome ?? operation.Status,
-        operation.Status == OperationStatuses.Succeeded ||
+        operation.Status == OperationStatuses.Succeeded &&
+            operation.Outcome is not "accepted_unverifiable" and not "reconciled_accepted_unverifiable" ||
             operation.Outcome is "verified_no_change" or "reconciled_verified_no_change",
         operation.BeforeStateJson,
         operation.DesiredStateJson,

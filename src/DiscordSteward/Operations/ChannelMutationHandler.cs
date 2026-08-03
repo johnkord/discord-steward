@@ -253,6 +253,34 @@ internal sealed class ChannelMutationHandler(
                 desiredStateJson);
         }
 
+        if (invocation.ToolName == "set_voice_channel_status")
+        {
+            var voiceChannel = await TryGetChannelAsync(invocation.ResourceId, cancellationToken).ConfigureAwait(false);
+            if (voiceChannel is null)
+            {
+                return new CatalogMutationObservation(
+                    CatalogMutationObservationKind.UnexpectedState,
+                    State(new ChannelExistenceState(invocation.ResourceId, Exists: false)));
+            }
+
+            var desired = DeserializeState<ChannelApiState>(desiredStateJson);
+            if (string.Equals(voiceChannel.VoiceStatus, desired.VoiceStatus, StringComparison.Ordinal))
+            {
+                return new CatalogMutationObservation(
+                    CatalogMutationObservationKind.DesiredState,
+                    State(voiceChannel));
+            }
+
+            if (ReceiptAccepted(priorReceiptJson))
+            {
+                return new CatalogMutationObservation(
+                    CatalogMutationObservationKind.AcceptedUnverifiable,
+                    State(voiceChannel));
+            }
+
+            return Observation(voiceChannel, beforeStateJson, desiredStateJson);
+        }
+
         if (invocation.ToolName == "replace_channel_permission_overwrites")
         {
             var currentChannel = await GetMutableChannelAsync(invocation.ResourceId, cancellationToken).ConfigureAwait(false);
@@ -1151,17 +1179,20 @@ internal sealed class ChannelMutationHandler(
         }, cancellationToken);
     }
 
-    private Task<JsonElement?> WriteVoiceStatusAsync(
+    private async Task<JsonElement?> WriteVoiceStatusAsync(
         CatalogMutationInvocation invocation,
         CancellationToken cancellationToken)
     {
         var input = Arguments<SetVoiceChannelStatusInput>(invocation);
-        return transport.SendJsonAsync(
+        await transport.SendJsonAsync(
             HttpMethod.Put,
             $"channels/{NormalizeSnowflake(invocation.ResourceId)}/voice-status",
             JsonSerializer.SerializeToElement(new Dictionary<string, object?> { ["status"] = input.Status }, CatalogJson.Options),
             AuditReason(invocation),
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
+        return JsonSerializer.SerializeToElement(
+            new Dictionary<string, object?> { ["accepted"] = true },
+            CatalogJson.Options);
     }
 
     private async Task<JsonElement?> WriteTypingAsync(
@@ -2352,10 +2383,10 @@ internal sealed class ChannelMutationHandler(
             state.ParentId == ParentId &&
             (!Position.HasValue || state.Position == Position.Value) &&
             (!TopicSpecified() || state.Topic == Topic) &&
-            (!Nsfw.HasValue || state.Nsfw == Nsfw) &&
-            (!RateLimitPerUser.HasValue || state.RateLimitPerUser == RateLimitPerUser) &&
+            OptionalFalseMatches(Nsfw, state.Nsfw) &&
+            OptionalZeroMatches(RateLimitPerUser, state.RateLimitPerUser) &&
             (!Bitrate.HasValue || state.Bitrate == Bitrate) &&
-            (!UserLimit.HasValue || state.UserLimit == UserLimit) &&
+            OptionalZeroMatches(UserLimit, state.UserLimit) &&
             (RtcRegion is null || state.RtcRegion == RtcRegion) &&
             (!VideoQualityMode.HasValue || state.VideoQualityMode == VideoQualityMode) &&
             (!DefaultAutoArchiveDuration.HasValue || state.DefaultAutoArchiveDuration == DefaultAutoArchiveDuration) &&
@@ -2374,6 +2405,12 @@ internal sealed class ChannelMutationHandler(
             (AppliedTags.IsDefault || state.AppliedTags.SequenceEqual(AppliedTags, StringComparer.Ordinal));
 
         private bool TopicSpecified() => Topic is not null;
+
+        private static bool OptionalFalseMatches(bool? expected, bool? observed) =>
+            !expected.HasValue || expected.Value == (observed ?? false);
+
+        private static bool OptionalZeroMatches(int? expected, int? observed) =>
+            !expected.HasValue || expected.Value == (observed ?? 0);
     }
 
     private static bool RichPayloadEquivalent(RichPayloadState expected, MessageView message) =>

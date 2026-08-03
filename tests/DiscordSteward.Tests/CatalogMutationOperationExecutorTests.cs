@@ -216,6 +216,35 @@ public sealed class CatalogMutationOperationExecutorTests
     }
 
     [Fact]
+    public async Task Execute_AcceptedUnverifiableIsTerminalWithoutClaimingVerification()
+    {
+        var adapter = new FakeAdapter
+        {
+            ObservationKind = CatalogMutationObservationKind.AcceptedUnverifiable
+        };
+        var journal = new InMemoryOperationJournal();
+        var executor = CreateExecutor(adapter, journal);
+        var invocation = Invocation(Guid.NewGuid().ToString("D"), "{\"value\":1}");
+
+        var result = await executor.ExecuteAsync(invocation, CancellationToken.None);
+        var replay = await executor.ExecuteAsync(invocation, CancellationToken.None);
+
+        Assert.Equal(OperationStatuses.Succeeded, result.Status);
+        Assert.Equal("accepted_unverifiable", result.Outcome);
+        Assert.False(result.Verified);
+        Assert.Null(result.ErrorCode);
+        Assert.Equal(result.InvocationDigest, replay.InvocationDigest);
+        Assert.Equal(result.Status, replay.Status);
+        Assert.Equal(result.Outcome, replay.Outcome);
+        Assert.Equal(result.Verified, replay.Verified);
+        Assert.Equal(result.Before?.GetRawText(), replay.Before?.GetRawText());
+        Assert.Equal(result.Desired?.GetRawText(), replay.Desired?.GetRawText());
+        Assert.Equal(result.Observed?.GetRawText(), replay.Observed?.GetRawText());
+        Assert.Equal(result.ErrorCode, replay.ErrorCode);
+        Assert.Equal(1, adapter.WriteCount);
+    }
+
+    [Fact]
     public async Task Execute_ExcessNonAdministratorPermissionsDoNotBlockWrite()
     {
         var adapter = new FakeAdapter();

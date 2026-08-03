@@ -318,8 +318,9 @@ internal sealed class MessageMutationHandler(
         CancellationToken cancellationToken)
     {
         var input = Arguments<SendMessageInput>(invocation);
-        var channel = await GetWritableMessageChannelAsync(invocation.ResourceId, input.ExpectedChannelStateDigest, cancellationToken).ConfigureAwait(false);
         var mode = NormalizeMode(input.Mode);
+        _ = NormalizeNonce(input.Nonce);
+        var channel = await GetWritableMessageChannelAsync(invocation.ResourceId, input.ExpectedChannelStateDigest, cancellationToken).ConfigureAwait(false);
         var content = input.Content is null ? null : NormalizeContent(input.Content, allowEmpty: true);
         MessageView? source = null;
         if (mode is "reply" or "forward")
@@ -648,6 +649,7 @@ internal sealed class MessageMutationHandler(
         CancellationToken cancellationToken)
     {
         var input = Arguments<CreatePollInput>(invocation);
+        _ = NormalizeNonce(input.Nonce);
         var channel = await GetWritableMessageChannelAsync(invocation.ResourceId, input.ExpectedChannelStateDigest, cancellationToken).ConfigureAwait(false);
         var answers = NormalizePollAnswers(input.Answers);
         if (input.DurationHours is < 1 or > 768)

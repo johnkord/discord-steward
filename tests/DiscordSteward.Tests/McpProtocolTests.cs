@@ -629,6 +629,19 @@ public sealed class McpProtocolTests
         Assert.Equal(
             ["channel_id", "input", "reason", "request_id"],
             GetRequiredPropertyNames(tools.Single(tool => tool.Name == "send_message")));
+        var sendMessage = tools.Single(tool => tool.Name == "send_message");
+        var sendInputProperties = sendMessage.ProtocolTool.InputSchema
+            .GetProperty("properties")
+            .GetProperty("input")
+            .GetProperty("properties");
+        Assert.Contains(
+            "new, reply, or forward",
+            sendInputProperties.GetProperty("mode").GetProperty("description").GetString(),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "1 to 25",
+            sendInputProperties.GetProperty("nonce").GetProperty("description").GetString(),
+            StringComparison.Ordinal);
         Assert.Equal(
             ["channel_id", "input", "message_id", "reason", "request_id"],
             GetRequiredPropertyNames(tools.Single(tool => tool.Name == "end_poll")));

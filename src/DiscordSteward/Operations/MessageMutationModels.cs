@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.ComponentModel;
 
 namespace DiscordSteward.Operations;
 
@@ -10,6 +11,7 @@ public sealed record AllowedMentionsInput(
 
 public sealed record SendMessageInput(
     string ExpectedChannelStateDigest,
+    [property: Description("Message mode. Allowed values: new, reply, or forward.")]
     string Mode,
     string? Content,
     string? SourceChannelId,
@@ -17,6 +19,7 @@ public sealed record SendMessageInput(
     string? ExpectedSourceMessageStateDigest,
     AllowedMentionsInput AllowedMentions,
     ImmutableArray<string> AssetIds,
+    [property: Description("Printable idempotency nonce containing 1 to 25 non-control Unicode characters.")]
     string Nonce,
     bool SuppressNotifications,
     ImmutableArray<RichEmbedInput>? Embeds = null,

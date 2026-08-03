@@ -190,6 +190,141 @@ public sealed class ChannelMutationHandlerTests
         Assert.Contains("\"accepted\":true", receipt.ReceiptJson, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task CreateTextChannel_OmittedFalseAndZeroDefaultsVerifyDesiredState()
+    {
+        await using var fixture = CreateFixture(ChannelState(
+            type: 0,
+            additional: """
+                "topic": null
+                """));
+        var invocation = CatalogMutationInvocation.Create(
+            Guid.CreateVersion7().ToString("D"),
+            "create_text_channel",
+            GuildId,
+            "create a text channel with explicit defaults",
+            new { });
+        const string desired = """
+            {
+              "type": 0,
+              "name": "general",
+              "parentId": null,
+              "position": null,
+              "topic": null,
+              "nsfw": false,
+              "rateLimitPerUser": 0,
+              "bitrate": null,
+              "userLimit": null,
+              "rtcRegion": null,
+              "videoQualityMode": null,
+              "defaultAutoArchiveDuration": null,
+              "defaultThreadRateLimitPerUser": null,
+              "defaultSortOrder": null,
+              "defaultForumLayout": null,
+              "permissionOverwrites": [],
+              "archived": null,
+              "locked": null,
+              "invitable": null,
+              "autoArchiveDuration": null,
+              "appliedTags": []
+            }
+            """;
+
+        var observation = await fixture.Handler.ObserveAsync(
+            invocation,
+            beforeStateJson: "{}",
+            desired,
+            priorReceiptJson: $$"""{"id":"{{ChannelId}}"}""",
+            CancellationToken.None);
+
+        Assert.Equal(CatalogMutationObservationKind.DesiredState, observation.Kind);
+    }
+
+    [Fact]
+    public async Task CreateTextChannel_OmittedNonDefaultValueDoesNotVerify()
+    {
+        await using var fixture = CreateFixture(ChannelState(
+            type: 0,
+            additional: """
+                "topic": null
+                """));
+        var invocation = CatalogMutationInvocation.Create(
+            Guid.CreateVersion7().ToString("D"),
+            "create_text_channel",
+            GuildId,
+            "create a text channel with non-default slow mode",
+            new { });
+        const string desired = """
+            {
+              "type": 0,
+              "name": "general",
+              "parentId": null,
+              "position": null,
+              "topic": null,
+              "nsfw": false,
+              "rateLimitPerUser": 5,
+              "bitrate": null,
+              "userLimit": null,
+              "rtcRegion": null,
+              "videoQualityMode": null,
+              "defaultAutoArchiveDuration": null,
+              "defaultThreadRateLimitPerUser": null,
+              "defaultSortOrder": null,
+              "defaultForumLayout": null,
+              "permissionOverwrites": [],
+              "archived": null,
+              "locked": null,
+              "invitable": null,
+              "autoArchiveDuration": null,
+              "appliedTags": []
+            }
+            """;
+
+        var observation = await fixture.Handler.ObserveAsync(
+            invocation,
+            beforeStateJson: "{}",
+            desired,
+            priorReceiptJson: $$"""{"id":"{{ChannelId}}"}""",
+            CancellationToken.None);
+
+        Assert.Equal(CatalogMutationObservationKind.UnexpectedState, observation.Kind);
+    }
+
+    [Fact]
+    public async Task SetVoiceChannelStatus_AcceptedButOmittedFromReadbackIsUnverifiable()
+    {
+        await using var fixture = CreateFixture(ChannelState(
+            type: 2,
+            additional: """
+                "bitrate": 64000,
+                "user_limit": 0,
+                "rtc_region": null,
+                "video_quality_mode": 1,
+                "status": null
+                """));
+        var invocation = CatalogMutationInvocation.Create(
+            Guid.CreateVersion7().ToString("D"),
+            "set_voice_channel_status",
+            ChannelId,
+            "set a visible voice status",
+            new SetVoiceChannelStatusInput(fixture.CurrentState().ComputeDigest(), "Sonic hearing"));
+
+        var preparation = await fixture.Handler.PrepareAsync(invocation, CancellationToken.None);
+        var receipt = await fixture.Handler.WriteAsync(invocation, preparation, CancellationToken.None);
+        var observation = await fixture.Handler.ObserveAsync(
+            invocation,
+            preparation.BeforeStateJson,
+            preparation.DesiredStateJson,
+            receipt.ReceiptJson,
+            CancellationToken.None);
+
+        Assert.Equal(CatalogMutationObservationKind.AcceptedUnverifiable, observation.Kind);
+        Assert.Equal(1, fixture.Http.MutationCount);
+        Assert.Equal(HttpMethod.Put, fixture.Http.LastMutationMethod);
+        Assert.Equal($"/api/v10/channels/{ChannelId}/voice-status", fixture.Http.LastMutationPath);
+        Assert.Contains("\"accepted\":true", receipt.ReceiptJson, StringComparison.Ordinal);
+    }
+
     private static CatalogMutationInvocation UpdateInvocation(
         ChannelApiState current,
         UpdateChannelSetInput set,
@@ -301,6 +436,12 @@ public sealed class ChannelMutationHandlerTests
             LastMutationPath = request.RequestUri!.AbsolutePath;
             if (request.Method == HttpMethod.Post &&
                 request.RequestUri.AbsolutePath == $"/api/v10/channels/{ChannelId}/typing")
+            {
+                return new HttpResponseMessage(HttpStatusCode.NoContent);
+            }
+
+            if (request.Method == HttpMethod.Put &&
+                request.RequestUri.AbsolutePath == $"/api/v10/channels/{ChannelId}/voice-status")
             {
                 return new HttpResponseMessage(HttpStatusCode.NoContent);
             }

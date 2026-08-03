@@ -14,6 +14,7 @@ internal sealed record DiscordBinaryPayload(
 internal sealed class DiscordApiTransport : IDisposable
 {
     private const long MaximumJsonBytes = 4 * 1024 * 1024;
+    private const int MaximumErrorJsonBytes = 64 * 1024;
     private const int MaximumBinaryBytes = 512 * 1024;
     private readonly DiscordOptions _options;
     private readonly DiscordRestSession _session;
@@ -45,7 +46,7 @@ internal sealed class DiscordApiTransport : IDisposable
         CancellationToken cancellationToken)
     {
         using var response = await SendGetWithRateLimitRetryAsync(fixedRoute, cancellationToken).ConfigureAwait(false);
-        EnsureSuccess(response);
+        await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
         return await ReadOptionalJsonAsync(response, cancellationToken).ConfigureAwait(false)
             ?? throw InvalidResponse();
     }
@@ -61,7 +62,7 @@ internal sealed class DiscordApiTransport : IDisposable
             return null;
         }
 
-        EnsureSuccess(response);
+        await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
         return await ReadOptionalJsonAsync(response, cancellationToken).ConfigureAwait(false)
             ?? throw InvalidResponse();
     }
@@ -71,7 +72,7 @@ internal sealed class DiscordApiTransport : IDisposable
         CancellationToken cancellationToken)
     {
         using var response = await SendGetWithRateLimitRetryAsync(fixedRoute, cancellationToken).ConfigureAwait(false);
-        EnsureSuccess(response);
+        await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
         if (response.Content.Headers.ContentLength > MaximumBinaryBytes)
         {
             throw new StewardException(
@@ -146,7 +147,7 @@ internal sealed class DiscordApiTransport : IDisposable
         }
 
         using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
-        EnsureSuccess(response);
+        await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
         return await ReadOptionalJsonAsync(response, cancellationToken).ConfigureAwait(false);
     }
 
@@ -160,7 +161,7 @@ internal sealed class DiscordApiTransport : IDisposable
         using var request = CreateRequest(method, fixedRoute, auditReason);
         request.Content = content;
         using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
-        EnsureSuccess(response);
+        await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
         return await ReadOptionalJsonAsync(response, cancellationToken).ConfigureAwait(false);
     }
 
@@ -184,7 +185,7 @@ internal sealed class DiscordApiTransport : IDisposable
         }
 
         using var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
-        EnsureSuccess(response);
+        await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
         return await ReadOptionalJsonAsync(response, cancellationToken).ConfigureAwait(false)
             ?? throw InvalidResponse();
     }
@@ -267,13 +268,62 @@ internal sealed class DiscordApiTransport : IDisposable
         return document.RootElement.Clone();
     }
 
-    private void EnsureSuccess(HttpResponseMessage response)
+    private async Task EnsureSuccessAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
     {
         if (!response.IsSuccessStatusCode)
         {
-            var mapped = DiscordErrorMapper.MapStatusCode(response.StatusCode, StewardErrorCodes.ResourceNotFound);
+            var details = response.StatusCode == HttpStatusCode.BadRequest
+                ? await TryReadErrorJsonAsync(response, cancellationToken).ConfigureAwait(false)
+                : null;
+            var mapped = DiscordErrorMapper.MapStatusCode(
+                response.StatusCode,
+                StewardErrorCodes.ResourceNotFound,
+                details);
             _session.ReportFailure(mapped.Code);
             throw mapped;
+        }
+    }
+
+    private static async Task<JsonElement?> TryReadErrorJsonAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        if (response.Content.Headers.ContentLength > MaximumErrorJsonBytes)
+        {
+            return null;
+        }
+
+        try
+        {
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            using var buffer = new MemoryStream();
+            var chunk = new byte[4 * 1024];
+            while (true)
+            {
+                var read = await stream.ReadAsync(chunk, cancellationToken).ConfigureAwait(false);
+                if (read == 0)
+                {
+                    break;
+                }
+
+                if (buffer.Length + read > MaximumErrorJsonBytes)
+                {
+                    return null;
+                }
+
+                buffer.Write(chunk, 0, read);
+            }
+
+            using var document = JsonDocument.Parse(
+                buffer.GetBuffer().AsMemory(0, checked((int)buffer.Length)),
+                new JsonDocumentOptions { MaxDepth = 32 });
+            return document.RootElement.Clone();
+        }
+        catch (Exception exception) when (exception is JsonException or IOException or HttpRequestException or InvalidOperationException)
+        {
+            return null;
         }
     }
 
