@@ -31,8 +31,12 @@ public sealed record CatalogMutationPreparation(
     string BeforeStateJson,
     string DesiredStateJson);
 
-public sealed record CatalogMutationWriteReceipt(
-    string? ReceiptJson);
+public sealed record CatalogMutationWriteReceipt(string? ReceiptJson)
+{
+    internal static JsonDocument OpenForObservation(string? receiptJson) => receiptJson is null
+        ? throw new StewardException(StewardErrorCodes.OutcomeUnknown, "No exact write receipt is available for verification.")
+        : JsonDocument.Parse(receiptJson);
+}
 
 public enum CatalogMutationObservationKind
 {
@@ -325,12 +329,18 @@ public sealed class CatalogMutationOperationExecutor(
             ?? throw AuditUnavailable("The operation has no durable before-state evidence.");
         var desired = operation.DesiredStateJson
             ?? throw AuditUnavailable("The operation has no durable desired-state evidence.");
-        var observation = await adapter.ObserveAsync(
-            invocation,
-            before,
-            desired,
-            operation.ObservedStateJson,
-            cancellationToken).ConfigureAwait(false);
+        CatalogMutationObservation observation;
+        try
+        {
+            observation = await adapter.ObserveAsync(
+                invocation, before, desired, operation.ObservedStateJson, cancellationToken).ConfigureAwait(false);
+        }
+        catch (StewardException exception) when (exception.Code == StewardErrorCodes.OutcomeUnknown)
+        {
+            return operation.Status == OperationStatuses.Unknown
+                ? ToResult(operation)
+                : await RecordUnknownAsync(operation, new CatalogMutationPreparation(before, desired), operation.ObservedStateJson).ConfigureAwait(false);
+        }
         return await PersistReconciliationAsync(operation, observation, now, cancellationToken).ConfigureAwait(false);
     }
 
@@ -397,7 +407,6 @@ public sealed class CatalogMutationOperationExecutor(
                 operation,
                 OperationStatuses.Failed,
                 "write_rejected",
-                verified: true,
                 preparation.BeforeStateJson,
                 preparation.DesiredStateJson,
                 preparation.BeforeStateJson,
@@ -425,7 +434,6 @@ public sealed class CatalogMutationOperationExecutor(
                 operation,
                 mapped.Status,
                 mapped.Outcome,
-                mapped.Verified,
                 preparation.BeforeStateJson,
                 preparation.DesiredStateJson,
                 observation.ObservedStateJson,
@@ -471,7 +479,6 @@ public sealed class CatalogMutationOperationExecutor(
             operation,
             OperationStatuses.Unknown,
             "write_outcome_unresolved",
-            verified: false,
             preparation.BeforeStateJson,
             preparation.DesiredStateJson,
             receiptJson,
@@ -524,7 +531,6 @@ public sealed class CatalogMutationOperationExecutor(
             operation,
             mapped.Status,
             mapped.Outcome,
-            mapped.Verified,
             operation.BeforeStateJson,
             operation.DesiredStateJson,
             observation.ObservedStateJson,
@@ -541,23 +547,19 @@ public sealed class CatalogMutationOperationExecutor(
                 reconciliation
                     ? "reconciled_verified_desired_state"
                     : writeErrorCode is null ? "verified_desired_state" : "recovered_verified_desired_state",
-                ErrorCode: null,
-                Verified: true),
+                ErrorCode: null),
             CatalogMutationObservationKind.AcceptedUnverifiable => new ObservationMapping(
                 OperationStatuses.Succeeded,
                 reconciliation ? "reconciled_accepted_unverifiable" : "accepted_unverifiable",
-                ErrorCode: null,
-                Verified: false),
+                ErrorCode: null),
             CatalogMutationObservationKind.BeforeState => new ObservationMapping(
                 OperationStatuses.Failed,
                 reconciliation ? "reconciled_verified_no_change" : "verified_no_change",
-                writeErrorCode ?? StewardErrorCodes.StateConflict,
-                Verified: true),
+                writeErrorCode ?? StewardErrorCodes.StateConflict),
             _ => new ObservationMapping(
                 OperationStatuses.PartialFailure,
                 reconciliation ? "reconciled_unexpected_state" : "observed_unexpected_state",
-                StewardErrorCodes.PartialFailure,
-                Verified: false)
+                StewardErrorCodes.PartialFailure)
         };
 
     private async Task<OperationReservation> ReserveAsync(
@@ -774,9 +776,6 @@ public sealed class CatalogMutationOperationExecutor(
         operation,
         operation.Status,
         operation.Outcome ?? operation.Status,
-        operation.Status == OperationStatuses.Succeeded &&
-            operation.Outcome is not "accepted_unverifiable" and not "reconciled_accepted_unverifiable" ||
-            operation.Outcome is "verified_no_change" or "reconciled_verified_no_change",
         operation.BeforeStateJson,
         operation.DesiredStateJson,
         operation.ObservedStateJson,
@@ -786,7 +785,6 @@ public sealed class CatalogMutationOperationExecutor(
         OperationRecord operation,
         string status,
         string outcome,
-        bool verified,
         string? beforeJson,
         string? desiredJson,
         string? observedJson,
@@ -797,7 +795,12 @@ public sealed class CatalogMutationOperationExecutor(
             operation.ResourceId,
             status,
             outcome,
-            verified,
+            status switch
+            {
+                OperationStatuses.Succeeded => outcome is "verified_desired_state" or "recovered_verified_desired_state" or "reconciled_verified_desired_state",
+                OperationStatuses.Failed => outcome is "write_rejected" or "verified_no_change" or "reconciled_verified_no_change",
+                _ => false
+            },
             ParseState(beforeJson),
             ParseState(desiredJson),
             ParseState(observedJson),
@@ -847,8 +850,7 @@ public sealed class CatalogMutationOperationExecutor(
     private sealed record ObservationMapping(
         string Status,
         string Outcome,
-        string? ErrorCode,
-        bool Verified);
+        string? ErrorCode);
 }
 
 internal static class CatalogJson

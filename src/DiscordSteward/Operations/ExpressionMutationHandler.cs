@@ -381,8 +381,7 @@ internal sealed class ExpressionMutationHandler(
 
     private static string CreatedId(string? receipt)
     {
-        if (receipt is null) throw InvalidResponse();
-        using var document = JsonDocument.Parse(receipt);
+        using var document = CatalogMutationWriteReceipt.OpenForObservation(receipt);
         var name = document.RootElement.TryGetProperty("sound_id", out _) ? "sound_id" : "id";
         return document.RootElement.TryGetProperty(name, out var id) && id.ValueKind == JsonValueKind.String
             ? NormalizeSnowflake(id.GetString() ?? string.Empty)

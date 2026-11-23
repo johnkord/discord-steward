@@ -1325,12 +1325,7 @@ internal sealed class MessageMutationHandler(
 
     private static string CreatedMessageId(string? receiptJson)
     {
-        if (receiptJson is null)
-        {
-            throw new StewardException(StewardErrorCodes.DiscordUnavailable, "Created message ID is unavailable.");
-        }
-
-        using var document = JsonDocument.Parse(receiptJson);
+        using var document = CatalogMutationWriteReceipt.OpenForObservation(receiptJson);
         return document.RootElement.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String
             ? NormalizeSnowflake(id.GetString() ?? string.Empty)
             : throw InvalidResponse("created message receipt");

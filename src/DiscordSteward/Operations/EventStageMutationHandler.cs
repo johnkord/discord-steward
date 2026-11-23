@@ -695,8 +695,7 @@ internal sealed class EventStageMutationHandler(
 
     private static string CreatedId(string? receipt)
     {
-        if (receipt is null) throw InvalidResponse();
-        using var document = JsonDocument.Parse(receipt);
+        using var document = CatalogMutationWriteReceipt.OpenForObservation(receipt);
         return document.RootElement.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String
             ? NormalizeSnowflake(id.GetString() ?? string.Empty)
             : throw InvalidResponse();

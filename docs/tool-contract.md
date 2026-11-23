@@ -154,6 +154,8 @@ Stable errors include:
 - If reliable evidence resolves the result, the journal records `succeeded` or `failed`. Otherwise it remains `unknown` and directs the operator to inspect Discord before approving any new write.
 - A new `request_id` is a new operation and may duplicate an unconfirmed create. Interactive hosts must display that warning during approval; autonomous callers must account for it explicitly.
 
+A definitive Discord rejection returns `status=failed`, `outcome=write_rejected`, and `verified=true`: the rejection is confirmed, not a successful change or a fresh observation of the resource. The state shown in this case is the preflight state. Reading the same terminal catalog receipt after a restart has the same meaning and never issues the write again. For abandoned claims, a missing acknowledgement that cannot be reconstructed leaves an explicit `unknown`; a temporary verification error is not evidence of rejection.
+
 Every released create operation documents whether Discord returns an exact resource ID or invite/template code, which audit event can correlate it, and whether an endpoint nonce exists. If none can distinguish the result after a lost response, the operation is explicitly non-reconcilable and remains `unknown`; Steward never falls back to a unique-looking display name.
 
 `partial_failure` is reserved for a single Discord endpoint that reports mixed outcomes for an explicit bounded target list, or for a Discord write that succeeded before required local credential persistence failed. It is not permission to run an automatic compensation or a hidden second write.

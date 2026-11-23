@@ -89,11 +89,11 @@ internal sealed class RoleMutationHandler(
             return Observation(observed, beforeStateJson, desiredStateJson);
         }
 
+        var createdId = invocation.ToolName == "create_role" ? CreatedRoleId(priorReceiptJson) : null;
         var snapshot = await guildReader.GetGuildSnapshotAsync(cancellationToken).ConfigureAwait(false);
         EnsureGuild(snapshot);
-        if (invocation.ToolName == "create_role")
+        if (createdId is not null)
         {
-            var createdId = CreatedRoleId(priorReceiptJson);
             var role = snapshot.Roles.SingleOrDefault(item => string.Equals(item.Id, createdId, StringComparison.Ordinal));
             if (role is null)
             {
@@ -611,14 +611,7 @@ internal sealed class RoleMutationHandler(
 
     private static string CreatedRoleId(string? receiptJson)
     {
-        if (receiptJson is null)
-        {
-            throw new StewardException(
-                StewardErrorCodes.DiscordUnavailable,
-                "Created role ID is unavailable; audit-log reconciliation is required.");
-        }
-
-        using var document = JsonDocument.Parse(receiptJson);
+        using var document = CatalogMutationWriteReceipt.OpenForObservation(receiptJson);
         return document.RootElement.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String
             ? NormalizeSnowflake(id.GetString() ?? string.Empty)
             : throw new StewardException(StewardErrorCodes.DiscordUnavailable, "Discord returned an invalid role receipt.");

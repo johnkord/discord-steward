@@ -148,6 +148,36 @@ public sealed class CatalogMutationOperationExecutorTests
     }
 
     [Fact]
+    public async Task AbandonedExecutionCanRemainUnknownOrResolveWithoutCallingWrite()
+    {
+        var adapter = new FakeAdapter { ObservationException = new StewardException(StewardErrorCodes.OutcomeUnknown, "No receipt") };
+        var journal = new InMemoryOperationJournal();
+        var time = new MutableTimeProvider(DateTimeOffset.UnixEpoch);
+        var executor = CreateExecutor(adapter, journal, timeProvider: time);
+        var invocation = Invocation(Guid.NewGuid().ToString("D"), "{}");
+        var json = OperationCanonicalizer.Serialize(invocation);
+        var digest = OperationCanonicalizer.ComputeDigest(json);
+        await journal.ReserveAsync(new OperationRecord(1, invocation.RequestId, invocation.ToolName, "123", invocation.ResourceId,
+            invocation.Reason, "R3", "profile", "manifest", digest, json, time.GetUtcNow(), OperationStatuses.Reserved,
+            null, null, null, null, null, null, null), CancellationToken.None);
+        Assert.True(await journal.BeginExecutionAsync(invocation.RequestId, digest, "{}", "{\"state\":1}", time.GetUtcNow(), CancellationToken.None));
+        var recent = await Assert.ThrowsAsync<StewardException>(() => executor.ReconcileAsync(invocation.RequestId, CancellationToken.None));
+        Assert.Equal(StewardErrorCodes.OperationInProgress, recent.Code);
+        Assert.Equal(0, adapter.ObservationCount);
+        time.Advance(TimeSpan.FromMinutes(3));
+        var unknown = await executor.ReconcileAsync(invocation.RequestId, CancellationToken.None);
+        Assert.Equal(OperationStatuses.Unknown, unknown.Status);
+        Assert.False(unknown.Verified);
+        Assert.Equal(StewardErrorCodes.OutcomeUnknown, (await journal.GetAsync(invocation.RequestId, CancellationToken.None))?.ErrorCode);
+        Assert.Equal(unknown.Outcome, (await executor.ReconcileAsync(invocation.RequestId, CancellationToken.None)).Outcome);
+        adapter.ObservationException = null;
+        var resolved = await executor.ReconcileAsync(invocation.RequestId, CancellationToken.None);
+        Assert.Equal(OperationStatuses.Succeeded, resolved.Status);
+        Assert.Null(resolved.ErrorCode);
+        Assert.Equal(0, adapter.WriteCount);
+    }
+
+    [Fact]
     public async Task Execute_UnknownOutcomePersistsOnlySanitizedReceiptIdentifiers()
     {
         var adapter = new FakeAdapter
@@ -213,6 +243,60 @@ public sealed class CatalogMutationOperationExecutorTests
         Assert.Equal(StewardErrorCodes.PartialFailure, result.ErrorCode);
         Assert.False(result.Verified);
         Assert.Equal(OperationStatuses.PartialFailure, stored?.Status);
+    }
+
+    [Theory]
+    [InlineData("write_rejected", true)]
+    [InlineData("verified_desired_state", true)]
+    [InlineData("verified_no_change", true)]
+    [InlineData("accepted_unverifiable", false)]
+    [InlineData("observed_unexpected_state", false)]
+    [InlineData("write_outcome_unresolved", false)]
+    public async Task TerminalReceiptSurvivesDuplicateAndJournalReopen(string outcome, bool verified)
+    {
+        var directory = Directory.CreateTempSubdirectory("steward-receipt-");
+        try
+        {
+            var path = Path.Combine(directory.FullName, "operations.json");
+            var adapter = new FakeAdapter
+            {
+                WriteException = outcome == "write_rejected" ? new StewardException(StewardErrorCodes.DiscordPermissionDenied, "Rejected") : null,
+                ObservationException = outcome == "write_outcome_unresolved" ? new IOException("No observation") : null,
+                ObservationKind = outcome switch
+                {
+                    "verified_no_change" => CatalogMutationObservationKind.BeforeState,
+                    "accepted_unverifiable" => CatalogMutationObservationKind.AcceptedUnverifiable,
+                    "observed_unexpected_state" => CatalogMutationObservationKind.UnexpectedState,
+                    _ => CatalogMutationObservationKind.DesiredState
+                }
+            };
+            var invocation = Invocation(Guid.NewGuid().ToString("D"), "{}");
+            string expected;
+            using (var journal = new FileBackedOperationJournal(path))
+            {
+                var executor = CreateExecutor(adapter, journal);
+                var first = await executor.ExecuteAsync(invocation, CancellationToken.None);
+                Assert.Equal(outcome, first.Outcome);
+                Assert.Equal(verified, first.Verified);
+                expected = JsonSerializer.Serialize(first);
+                Assert.Equal(expected, JsonSerializer.Serialize(await executor.ExecuteAsync(invocation, CancellationToken.None)));
+            }
+
+            using var reopened = new FileBackedOperationJournal(path);
+            var restarted = CreateExecutor(adapter, reopened);
+            Assert.Equal(expected, JsonSerializer.Serialize(await restarted.ExecuteAsync(invocation, CancellationToken.None)));
+            if (outcome != "write_outcome_unresolved")
+            {
+                Assert.Equal(expected, JsonSerializer.Serialize(await restarted.ReconcileAsync(invocation.RequestId, CancellationToken.None)));
+            }
+
+            Assert.Equal(1, adapter.WriteCount);
+            Assert.Equal(outcome == "write_rejected" ? 0 : 1, adapter.ObservationCount);
+        }
+        finally
+        {
+            directory.Delete(recursive: true);
+        }
     }
 
     [Fact]

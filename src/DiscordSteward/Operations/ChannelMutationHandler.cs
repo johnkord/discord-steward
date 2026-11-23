@@ -2182,12 +2182,7 @@ internal sealed class ChannelMutationHandler(
 
     private static string CreatedChannelId(string? receiptJson)
     {
-        if (receiptJson is null)
-        {
-            throw new StewardException(StewardErrorCodes.DiscordUnavailable, "Created channel ID is unavailable.");
-        }
-
-        using var document = JsonDocument.Parse(receiptJson);
+        using var document = CatalogMutationWriteReceipt.OpenForObservation(receiptJson);
         return document.RootElement.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String
             ? NormalizeSnowflake(id.GetString() ?? string.Empty)
             : throw InvalidResponse("created channel receipt");

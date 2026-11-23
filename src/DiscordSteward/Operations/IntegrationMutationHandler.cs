@@ -1230,8 +1230,7 @@ internal sealed class IntegrationMutationHandler(
 
     private static string ReceiptString(string? receipt, string name)
     {
-        if (receipt is null) throw InvalidResponse("write receipt");
-        using var document = JsonDocument.Parse(receipt);
+        using var document = CatalogMutationWriteReceipt.OpenForObservation(receipt);
         return document.RootElement.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
             ? value.GetString() ?? throw InvalidResponse("write receipt")
             : throw InvalidResponse("write receipt");
