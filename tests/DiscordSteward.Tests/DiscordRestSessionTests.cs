@@ -81,7 +81,7 @@ public sealed class DiscordRestSessionTests
 
                 var exception = await Assert.ThrowsAsync<StewardException>(() => transport.SendJsonAsync(
                         HttpMethod.Post,
-                        "channels/200000000000000002/messages",
+                    "channels/100000000000000002/messages",
                         JsonSerializer.SerializeToElement(new { content = sensitiveText }),
                         "test invalid form",
                         CancellationToken.None));
